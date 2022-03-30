@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id               Int     @id @default(autoincrement())
+  email            String  @unique
+  nickname         String  @unique
+  password         String
+  country          String?
+  songs            Song[]
+}
+
+model Song {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  title            String
+  url              String
+  url2             String?
+  cover            String?
+  sum              Int
+  timeToComplete   String?
+  donations        Donation[]
+  author           User?    @relation(fields: [authorId], references: [id])
+  authorId         Int?
+}
+
+model Donation {
+  id               Int      @id @default(autoincrement())
+  song             Song?    @relation(fields: [songId], references: [id])
+  songId           Int?
+  sum              Int
+  donatorEmail     String?
+}
