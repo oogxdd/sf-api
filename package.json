@@ -1,5 +1,6 @@
 {
-  "name": "graphql-auth",
+  "name": "soundfuck-api",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "dev": "nodemon src/server.js"
