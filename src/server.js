@@ -54,9 +54,9 @@ async function startApolloServer() {
 
   // server.applyMiddleware({ app, path: '/', cors: cors(corsOptions) })
   server.applyMiddleware({ app, path: '/' })
-  await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
+  await new Promise((resolve) => httpServer.listen({ port: 8080 }, resolve))
   console.log(`\
-    🚀 Server ready at: http://localhost:4000
+    🚀 Server ready at: http://localhost:8080
     ⭐️ See sample queries: http://pris.ly/e/js/graphql-auth#using-the-graphql-api`)
   return { server, app }
 }
