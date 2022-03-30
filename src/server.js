@@ -28,12 +28,17 @@ async function startApolloServer() {
   const server = new ApolloServer({
     schema,
     context: createContext,
-    // cors: cors(corsOptions),
+    cors: cors(corsOptions),
     // resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   })
 
-  app.use(cors())
+  app.use(
+    cors({
+      origin: '*',
+      credentials: true,
+    }),
+  )
   await server.start()
 
   app.use('/files', express.static('files'))
