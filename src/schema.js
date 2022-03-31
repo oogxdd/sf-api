@@ -26,8 +26,8 @@ const Query = objectType({
     t.crud.users()
     t.crud.song()
     t.crud.songs({ ordering: true })
-    // t.crud.donation()
-    // t.crud.donations()
+    t.crud.donation()
+    t.crud.donations()
   },
 })
 
@@ -35,16 +35,16 @@ const Mutation = objectType({
   name: 'Mutation',
   definition(t) {
     t.crud.createOneUser()
-    // t.crud.updateOneUser()
-    // t.crud.deleteOneUser()
+    t.crud.updateOneUser()
+    t.crud.deleteOneUser()
 
     t.crud.createOneSong()
     t.crud.updateOneSong()
     t.crud.deleteOneSong()
 
-    // t.crud.createOneDonation()
-    // t.crud.updateOneDonation()
-    // t.crud.deleteOneDonation()
+    t.crud.createOneDonation()
+    t.crud.updateOneDonation()
+    t.crud.deleteOneDonation()
 
     t.field('signup', {
       type: 'AuthPayload',
@@ -61,6 +61,7 @@ const Mutation = objectType({
             nickname: args.nickname,
             email: args.email,
             password: hashedPassword,
+            country: args.country,
           },
         })
         return {
@@ -93,6 +94,37 @@ const Mutation = objectType({
           token: sign({ userId: user.id }, APP_SECRET),
           user,
         }
+      },
+    })
+
+    t.field('createSong', {
+      type: 'Song',
+      args: {
+        title: nonNull(stringArg()),
+        url: nonNull(stringArg()),
+        sum: nonNull(stringArg()),
+        timeToComplete: nonNull(stringArg()),
+        cover: stringArg(),
+      },
+      resolve: async (_, args, context) => {
+        const { title, url, sum, timeToComplete, cover } = args
+        const userId = getUserId(context)
+        const song = await context.prisma.song.create({
+          data: {
+            title: title,
+            url: url,
+            sum: parseInt(sum),
+            timeToComplete: timeToComplete,
+            cover: cover,
+            author: {
+              connect: {
+                id: userId,
+              },
+            },
+          },
+        })
+
+        return song
       },
     })
   },
@@ -144,6 +176,25 @@ const Song = objectType({
   },
 })
 
+const Donation = objectType({
+  name: 'Donation',
+  definition(t) {
+    t.nonNull.int('id')
+    t.nonNull.int('sum')
+    t.field('song', {
+      type: 'Song',
+      resolve: (parent, _, context) => {
+        return context.prisma.donation
+          .findUnique({
+            where: { id: parent.id || undefined },
+          })
+          .song()
+      },
+    })
+    t.string('donatorEmail')
+  },
+})
+
 const AuthPayload = objectType({
   name: 'AuthPayload',
   definition(t) {
@@ -153,7 +204,7 @@ const AuthPayload = objectType({
 })
 
 const schemaWithoutPermissions = makeSchema({
-  types: [Query, Mutation, User, Song, AuthPayload, DateTime],
+  types: [Query, Mutation, User, Song, Donation, AuthPayload, DateTime],
 
   plugins: [
     nexusPrisma({
@@ -179,6 +230,7 @@ const schemaWithoutPermissions = makeSchema({
 })
 
 const schema = applyMiddleware(schemaWithoutPermissions, permissions)
+// const schema = applyMiddleware(schemaWithoutPermissions)
 
 module.exports = {
   schema: schema,

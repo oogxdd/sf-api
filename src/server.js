@@ -47,6 +47,8 @@ async function startApolloServer() {
     const file = req.file // file passed from client
     const meta = req.body // all other values passed from the client, like name, etc..
 
+    console.log(req)
+    console.log(file)
     res.status(200).json({ path: file.path })
   })
 

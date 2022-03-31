@@ -1,4 +1,4 @@
-const { rule, shield, allow, deny } = require('graphql-shield')
+const { rule, shield, allow, deny, or } = require('graphql-shield')
 const { getUserId } = require('../utils')
 
 const rules = {
@@ -11,27 +11,41 @@ const rules = {
     const author = await context.prisma.song
       .findUnique({
         where: {
-          id: Number(args.id),
+          id: Number(args.where.id),
         },
       })
       .author()
     return userId === author.id
   }),
+  isAdmin: rule()((_parent, _args, context) => {
+    const userId = getUserId(context)
+    return false
+    // return Boolean(userId)
+  }),
 }
 
 const permissions = shield({
   Query: {
-    // me: rules.isAuthenticatedUser,
+    donations: rules.isAdmin,
   },
   Mutation: {
-    // updateOneUser: rules.isAdmin,
-    // deleteOneUser: rules.isAdmin,
+    // createOneUser: rules.isAdmin,
+    updateOneUser: rules.isAdmin,
+    deleteOneUser: rules.isAdmin,
+
+    createSong: rules.isAuthenticatedUser,
     createOneSong: rules.isAuthenticatedUser,
-    updateOneSong: rules.isSongOwner,
-    deleteOneSong: rules.isSongOwner,
+    updateOneSong: or(rules.isSongOwner, rules.isAdmin),
+    deleteOneSong: or(rules.isSongOwner, rules.isAdmin),
+
+    createOneDonation: rules.isAdmin,
+    updateOneDonation: rules.isAdmin,
+    deleteOneDonation: rules.isAdmin,
+
+    signup: allow,
   },
   User: {
-    email: deny,
+    email: rules.isAdmin,
     password: deny,
   },
 })
