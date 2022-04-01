@@ -4,19 +4,33 @@ const { ApolloServerPluginDrainHttpServer } = require('apollo-server-core')
 const { createContext } = require('./context')
 const { schema } = require('./schema')
 const express = require('express')
-const multer = require('multer')
 const http = require('http')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
-const storage = multer.diskStorage({
-  destination: './files',
-  filename(req, file, cb) {
-    cb(null, `${new Date()}-${file.originalname}`)
+const cloudinary = require('cloudinary').v2
+const multer = require('multer')
+const { CloudinaryStorage } = require('multer-storage-cloudinary')
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'soundfuck',
+    resource_type: 'auto',
+    allowedFormats: ['jpeg', 'png', 'jpg', 'mp3', 'wav', 'flac'],
   },
 })
 
-const upload = multer({ storage })
+const parser = multer({ storage: storage })
+
+// const storage = multer.diskStorage({
+//   destination: './files',
+//   filename(req, file, cb) {
+//     cb(null, `${new Date()}-${file.originalname}`)
+//   },
+// })
+
+// const upload = multer({ storage })
 
 const corsOptions = {
   origin: '*',
@@ -42,17 +56,10 @@ async function startApolloServer() {
   )
   await server.start()
 
-  app.use('/files', express.static('files'))
-  app.post('/files', upload.single('file'), (req, res) => {
-    const file = req.file // file passed from client
-    const meta = req.body // all other values passed from the client, like name, etc..
-
-    console.log(req)
-    console.log(file)
-    res.status(200).json({ path: file.path })
+  app.post('/files', parser.single('file'), (req, res) => {
+    res.status(200).json({ path: req.file.path })
   })
 
-  app.use(express.static('files'))
   app.use(bodyParser.json({ limit: '50mb', type: 'application/json' }))
 
   // server.applyMiddleware({ app, path: '/', cors: cors(corsOptions) })
